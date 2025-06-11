@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prolog коли с правила и GIF</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 700px;
+      margin: 30px auto;
+      background: #f5f5f5;
+      color: #333;
+      padding: 20px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      text-align: center;
+    }
+    textarea {
+      width: 90%;
+      max-width: 600px;
+      height: 120px;
+      font-family: monospace;
+      font-size: 16px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 2px solid #007acc;
+      padding: 8px;
+      resize: vertical;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 25px;
+      font-size: 18px;
+      background-color: #007acc;
+      border: none;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #005f99;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      min-height: 30px;
+      font-weight: bold;
+      color: #004a99;
+    }
+    .car-container {
+      margin-top: 30px;
+      min-height: 160px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      background: #d0eaff;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #a0c4ff;
+      padding: 15px;
+    }
+    .car-gif {
+      max-width: 180px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #005f99;
+    }
+  </style>
+</head>
+<body>
+  <h1>Prolog коли с различни правила и GIF</h1>
+
+  <textarea id="prolog-input">
+% Примери на заявки:
+is_fast(X).
+is_luxury(X).
+is_electric(X).
+  </textarea><br />
+  <button onclick="runProlog()">Изпълни</button>
+
+  <div id="result"></div>
+  <div class="car-container" id="car-animation"></div>
+
+  <script src="https://unpkg.com/tau-prolog"></script>
+  <script>
+    const session = pl.create();
+
+    const knowledge = `
+      car(ferrari).
+      car(tesla).
+      car(rolls_royce).
+      car(lamborghini).
+      car(bmw).
+      car(porsche).
+
+      fast(ferrari).
+      fast(lamborghini).
+      fast(porsche).
+
+      luxury(rolls_royce).
+      luxury(bmw).
+
+      electric(tesla).
+
+      is_fast(X) :- fast(X).
+      is_luxury(X) :- luxury(X).
+      is_electric(X) :- electric(X).
+    `;
+
+    session.consult(knowledge);
+
+    const carAnimations = {
+      ferrari: '<img src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif" class="car-gif" alt="Ferrari" />',
+      tesla: '<img src="https://media.giphy.com/media/3o6ZtpxSZbQRRnwCKQ/giphy.gif" class="car-gif" alt="Tesla" />',
+      rolls_royce: '<img src="https://media.giphy.com/media/l3vR0JLJbPUnt9RHi/giphy.gif" class="car-gif" alt="Rolls-Royce" />',
+      lamborghini: '<img src="https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif" class="car-gif" alt="Lamborghini" />',
+      bmw: '<img src="https://media.giphy.com/media/3o7TKttwGAXFh9V06c/giphy.gif" class="car-gif" alt="BMW" />',
+      porsche: '<img src="https://media.giphy.com/media/l0ExhBeEHBdx8Y8Ca/giphy.gif" class="car-gif" alt="Porsche" />'
+    };
+
+    function runProlog() {
+      const input = document.getElementById("prolog-input").value.trim();
+      const resultDiv = document.getElementById("result");
+      const animDiv = document.getElementById("car-animation");
+
+      resultDiv.innerHTML = "";
+      animDiv.innerHTML = "";
+
+      if (!input) {
+        resultDiv.innerHTML = "<p>Моля, въведете заявка.</p>";
+        return;
+      }
+
+      session.query(input);
+
+      const shown = new Set();
+
+      session.answers(answer => {
+        if (answer === false) {
+          if (shown.size === 0) {
+            resultDiv.innerHTML = "<p>Няма резултати за тази заявка.</p>";
+          } else {
+            resultDiv.innerHTML += "<p>Няма повече резултати.</p>";
+          }
+          return;
+        }
+
+        const str = pl.format_answer(answer);
+        resultDiv.innerHTML += `<p>${str}</p>`;
+
+        const regex = /X\s*=\s*(\w+)/;
+        const match = str.match(regex);
+
+        if (match) {
+          const car = match[1];
+          if (!shown.has(car)) {
+            shown.add(car);
+            if (carAnimations[car]) {
+              animDiv.innerHTML += carAnimations[car];
+            } else {
+              animDiv.innerHTML += `<p>Няма GIF за "${car}".</p>`;
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
